@@ -72,20 +72,32 @@ void setup() {
 
 void polariza() {
 
-  delay(1000);
-
   //Exibe o status de cada sensor - físico
-  Serial.print("Esquerda aberta= " + String(digitalRead(sensorPortaEsquerdaAberta)) + " ");
-  Serial.print("Esquerda fechada= " + String(digitalRead(sensorPortaEsquerdaFechada)) + " ");
-  Serial.print("Direita aberta= " + String(digitalRead(sensorPortaDireitaAberta)) + " ");
-  Serial.println("Direita fechada= " + String(digitalRead(sensorPortaDireitaFechada)) + " ");
+  //Os comentários marcados com /// foram utilizados no Debug apenas
+  ///Serial.print("Fisico>> ");
+  //O sensor de porta aberta é NF. Quando a porta está totalmente aberta seu nível lógico é 0.
+  if (digitalRead(sensorPortaEsquerdaAberta)) {
+    ///Serial.print("ESQ AB acionado | ");
+  } else {
+    ///Serial.print("ESQ AB nao acionado | ");
+  }
+  if (digitalRead(sensorPortaDireitaAberta)) {
+    ///Serial.print("DIR AB acionado | ");
+  } else {
+    ///Serial.print("DIR AB nao acionado | ");
+  }
 
-  //Exibe o status de cada sensor - polarizado
-  Serial.print("Esquerda aberta= " + String(digitalRead(sensorPEA_EP)) + " ");
-  Serial.print("Esquerda fechada= " + String(digitalRead(sensorPEF_EP)) + " ");
-  Serial.print("Direita aberta= " + String(digitalRead(sensorPDA_EP)) + " ");
-  Serial.println("Direita fechada= " + String(digitalRead(sensorPDF_EP)) + " ");
-
+  //O sensor de porta fechada é NA. Quando a porta está totalmente fechada seu nível lógico é 1.
+  if (digitalRead(sensorPortaEsquerdaFechada)) {
+    ///Serial.print("ESQ FC acionado | ");
+  } else {
+    ///Serial.print("ESQ FC nao acionado | ");
+  }
+  if (digitalRead(sensorPortaDireitaFechada)) {
+    ///Serial.print("DIR FC acionado | ");
+  } else {
+    ///Serial.print("DIR FC nao acionado | ");
+  }
 
   //Lógica de polarização de entradas
   //Sensores das portas
@@ -98,6 +110,33 @@ void polariza() {
   sensorPEF_EP = digitalRead(sensorPortaEsquerdaFechada) ^ 0;
   //Sensor de porta totalmente fechada. Este sensor é NA. O ponto esperado é 0. Quando comuta para 1 ele foi pressionado.
   sensorPDF_EP = digitalRead(sensorPortaDireitaFechada) ^ 0;
+
+
+  //Exibe o status de cada sensor - polarizado
+  Serial.println("");
+  Serial.print("Logico>> ");
+  if (sensorPEA_EP && sensorPEF_EP) {
+    Serial.println("Dois sensores opostos do lado esquerdo acionados!");
+  }
+  if (sensorPEA_EP) {
+    Serial.print("Esquerda aberta | ");
+  }
+  if (sensorPEF_EP) {
+    Serial.print("Esquerda fechada | ");
+  }
+
+  if (sensorPDA_EP && sensorPDF_EP) {
+    Serial.println("Dois sensores opostos do lado direito acionados!");
+  }
+  if (sensorPDA_EP) {
+    Serial.print("Direita aberta | ");
+  }
+  if (sensorPDF_EP) {
+    Serial.print("Direita fechada | ");
+  }
+  Serial.println("");
+  delay(1000);
+
 }
 
 //==========================================================================================================//
@@ -124,7 +163,7 @@ void abrePortas(String lado) {
     }
     else {
       //Se a porta da esquerda não se encontrar totalmente aberta o controlador solicita sua abertura
-      Serial.println("Abrindo porta esquerda");
+      Serial.println("-----Abrindo porta esquerda");
       //Certifica-se de mandar abrir a porta esquerda
       digitalWrite(abrePortaEsquerdaA, HIGH); //Ativa pulso para abertura
       digitalWrite(abrePortaEsquerdaB, LOW); //Retira pulso para abertura
@@ -143,7 +182,7 @@ void abrePortas(String lado) {
     }
     else {
       //Se a porta da esquerda não se encontrar totalmente aberta o controlador solicita sua abertura
-      Serial.println("Abrindo porta direita");
+      Serial.println("-----Abrindo porta direita");
       //Certifica-se de mandar abrir a porta esquerda
       digitalWrite(abrePortaDireitaA, HIGH); //Ativa pulso para abertura
       digitalWrite(abrePortaDireitaB, LOW); //Retira pulso para abertura
@@ -177,7 +216,7 @@ void fechaPortas(String lado) {
     }
     else {
       //Se a porta da esquerda não se encontrar totalmente fechada o controlador solicita seu fechamento
-      Serial.println("Fechando porta esquerda");
+      Serial.println("-----Fechando porta esquerda");
       //Certifica-se de mandar fechar a porta esquerda
       digitalWrite(abrePortaEsquerdaA, LOW); //Ativa pulso para fechamento
       digitalWrite(abrePortaEsquerdaB, HIGH); //Retira pulso para fechamento
@@ -187,7 +226,7 @@ void fechaPortas(String lado) {
     //Depois testa se a porta solicitada foi a da direita
   } else   if (lado.equals("Direita")) {
     //Agora verifica se a porta já se encontra fechada
-    if (sensorPDA_EP) {
+    if (sensorPDF_EP) {
       Serial.println("Porta direita totalmente fechada");
       //Certifica-se de parar o motor de abertura da porta esquerda
       digitalWrite(abrePortaDireitaA, LOW); //Retira pulso para abertura
@@ -196,7 +235,7 @@ void fechaPortas(String lado) {
     }
     else {
       //Se a porta da direita não se encontrar totalmente aberta o controlador solicita sua abertura
-      Serial.println("Fechando porta direita");
+      Serial.println("-----Fechando porta direita");
       //Certifica-se de mandar abrir a porta esquerda
       digitalWrite(abrePortaDireitaA, LOW); //Ativa pulso para abertura
       digitalWrite(abrePortaDireitaB, HIGH); //Retira pulso para abertura
@@ -217,11 +256,22 @@ void botoes() {
 
   //Botoes internos da cabine
   /*Abertura e fechamento das portas
-    Se o botão de abertura da cabine for acionado ele solicita a abertura ou fechamento
-    de ambas as portas até que os sensores sejam todos acionados.*/
+    Se o botão de abertura ou fechamento da cabine for acionado ele solicita
+    a abertura ou fechamento de ambas as portas até que os sensores sejam todos acionados.*/
   String lado;
-  if (digitalRead(botaoAbrePorta)) {
-    Serial.println("Botao de abertura aciondao - cabine");
+  if (digitalRead(botaoAbrePorta) && digitalRead(botaoFechaPorta)) {
+    //Ambos botoes pressionados simultaneamente. O controlador não atualiza os comandos
+    Serial.println("Ambos botoes acionados - cabine");
+    digitalWrite(abrePortaEsquerdaA, LOW);
+    digitalWrite(abrePortaEsquerdaB, LOW);
+    digitalWrite(abrePortaDireitaA, LOW);
+    digitalWrite(abrePortaDireitaB, LOW);
+    digitalWrite(habilitaMotorPortaEsquerda, LOW); //Inibe ponte-h da porta da esquerda
+    digitalWrite(habilitaMotorPortaDireita, LOW); //Inibe ponte-h da porta da direita
+
+  }
+  else if (digitalRead(botaoAbrePorta)) {
+    Serial.println("Botao de abertura acionado - cabine");
     do {
       lado = "Esquerda";
       abrePortas(lado);
@@ -233,7 +283,7 @@ void botoes() {
   }
 
   else if (digitalRead(botaoFechaPorta)) {
-    Serial.println("Botao de fechamento aciondao - cabine");
+    Serial.println("Botao de fechamento acionado - cabine");
     do {
       lado = "Esquerda";
       fechaPortas(lado);
