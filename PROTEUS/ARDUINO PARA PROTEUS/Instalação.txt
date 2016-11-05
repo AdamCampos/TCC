@@ -1,0 +1,1 @@
+Copiar os dois arquivos para dentro de C:\ProgramData\Labcenter Electronics\Proteus 8 Professional\LIBRARY
