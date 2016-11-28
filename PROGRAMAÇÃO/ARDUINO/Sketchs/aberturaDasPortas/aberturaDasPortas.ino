@@ -6,9 +6,9 @@
 
 //Entradas digitais
 int sensorPortaEsquerdaAberta = 22;
-int sensorPortaDireitaAberta = 23;
+int sensorPortaDireitaFechada = 23;
 int sensorPortaEsquerdaFechada = 24;
-int sensorPortaDireitaFechada = 25;
+int sensorPortaDireitaAberta = 25;
 int sensorAndar1 = 26;
 int sensorAndar2 = 27;
 int botaoChamadaCima = 28;
@@ -135,7 +135,7 @@ void polariza() {
     Serial.print("Direita fechada | ");
   }
   Serial.println("");
-  delay(1000);
+  //delay(1000);
 
 }
 
@@ -181,7 +181,7 @@ void abrePortas(String lado) {
       digitalWrite(habilitaMotorPortaDireita, LOW); //Inibe ponte-h da porta da direita
     }
     else {
-      //Se a porta da esquerda não se encontrar totalmente aberta o controlador solicita sua abertura
+      //Se a porta da direita não se encontrar totalmente aberta o controlador solicita sua abertura
       Serial.println("-----Abrindo porta direita");
       //Certifica-se de mandar abrir a porta esquerda
       digitalWrite(abrePortaDireitaA, HIGH); //Ativa pulso para abertura
@@ -211,7 +211,7 @@ void fechaPortas(String lado) {
       Serial.println("Porta esquerda totalmente fechada");
       //Certifica-se de parar o motor de fechamento da porta esquerda
       digitalWrite(abrePortaEsquerdaA, LOW); //Retira pulso para fechamento
-      digitalWrite(abrePortaEsquerdaA, LOW); //Retira pulso para fechamento
+      digitalWrite(abrePortaEsquerdaB, LOW); //Retira pulso para fechamento
       digitalWrite(habilitaMotorPortaEsquerda, LOW); //Inibe ponte-h da porta da esquerda
     }
     else {
@@ -270,7 +270,8 @@ void botoes() {
     digitalWrite(habilitaMotorPortaDireita, LOW); //Inibe ponte-h da porta da direita
 
   }
-  else if (digitalRead(botaoAbrePorta)) {
+  //Caso os sensores já estejam detectando ambas as portas abertas o loop não é realizado
+  else if (digitalRead(botaoAbrePorta) && (!sensorPEA_EP || !sensorPDA_EP)) {
     Serial.println("Botao de abertura acionado - cabine");
     do {
       lado = "Esquerda";
@@ -282,7 +283,8 @@ void botoes() {
     while (!sensorPEA_EP && !sensorPDA_EP);
   }
 
-  else if (digitalRead(botaoFechaPorta)) {
+  //Caso os sensores já estejam detectando ambas as portas fechadas o loop não é realizado
+  else if (digitalRead(botaoFechaPorta) && (!sensorPEF_EP || !sensorPDF_EP)) {
     Serial.println("Botao de fechamento acionado - cabine");
     do {
       lado = "Esquerda";
@@ -291,7 +293,7 @@ void botoes() {
       fechaPortas(lado);
       polariza();
     }
-    while (!sensorPEA_EP && !sensorPDA_EP);
+    while (!sensorPEF_EP && !sensorPDF_EP);
   }
   else {
     //Nenhum botão acionado. Os motores devem parar e deixar o sistema automático os posicionar
@@ -340,8 +342,6 @@ void loop() {
     //Exibe no monitor o tempo em que o programa está rodando
     Serial.println("-------------------------------------------------------------------");
     Serial.println(String((millis() / 1000)) + " segundos ativo" );
-    int tempo = 0;
-
     polariza();
     botoes();
   }

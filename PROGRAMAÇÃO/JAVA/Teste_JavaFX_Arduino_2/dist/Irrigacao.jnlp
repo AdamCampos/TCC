@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<jnlp spec="1.0" xmlns:jfx="http://javafx.com" href="Irrigacao.jnlp">
+  <information>
+    <title>Irrigacao</title>
+    <vendor>Adam</vendor>
+    <description>null</description>
+    <offline-allowed/>
+  </information>
+  <resources>
+    <j2se version="1.6+" href="http://java.sun.com/products/autodl/j2se"/>
+    <jar href="Irrigacao.jar" size="9081" download="eager" />
+    <jar href="lib\RXTXcomm.jar" size="60984" download="eager" />
+  </resources>
+  <applet-desc  width="800" height="600" main-class="com.javafx.main.NoJavaFXFallback"  name="Irrigacao" >
+    <param name="requiredFXVersion" value="8.0+"/>
+  </applet-desc>
+  <jfx:javafx-desc  width="800" height="600" main-class="view.FXIrrigacao"  name="Irrigacao" />
+  <update check="always"/>
+</jnlp>
