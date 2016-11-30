@@ -4,8 +4,7 @@
 //                                                                                                          //
 //==========================================================================================================//
 
-#include <SoftwareSerial.h>
-#include "VoiceRecognitionV3.h"
+#include <moduloVoz.h>
 
 //==========================================================================================================//
 //                                                                                                          //
@@ -14,13 +13,21 @@
 //==========================================================================================================//
 
 //Parametrização do comando de voz. O módulo deve estar previamente treinado e carregado.
-//Método da classe VR (VoiceRecognitionV3). Seta uma porta serial com RX sendo o pino 2 do Arduino e TX o 3.
-VR myVR(2,3);
-uint8_t records[7];
+//Método da classe moduloVoz. Seta a porta Serial1 (válido somente para o Mega). RX=19 TX=18
+//Para o UNO usar a biblioteca original (VoiceRecognitionV3)
+uint8_t records[7]; // Salva as gravações
 uint8_t buf[64];
-int led = 13;
-#define comandoVozAbrir    (0)
-#define comandoVozFechar   (1) 
+
+//Pré compilação das constantes
+const int comandoVozAbrir = 0;
+const int comandoVozFechar =  1;
+
+//Variáveis globais
+static boolean comandoAbertura = false;
+static boolean comandoFechamento = false;
+
+//Instancia um objeto da classe moduloVoz
+moduloVoz modulo;
 
 //Entradas digitais
 int sensorPortaEsquerdaAberta = 22;
@@ -40,10 +47,10 @@ int botaoFechaPorta = 34;
 //Saídas digitais
 int habilitaMotorPortaEsquerda = 45;
 int habilitaMotorPortaDireita = 46;
-int abrePortaEsquerdaA = 47; //Para abrir setar em 1, para fechar setar em 0
-int abrePortaEsquerdaB = 48; //Para abrir setar em 0, para fechar setar em 1
-int abrePortaDireitaA = 49;
-int abrePortaDireitaB = 50;
+int abrePortaEsquerdaA = 47; //Para abrir setar em 1, para fechar setar em 0 (ponte h - 9)
+int abrePortaEsquerdaB = 48; //Para abrir setar em 0, para fechar setar em 1 (ponte h - 16)
+int abrePortaDireitaA = 49; //Para abrir setar em 1, para fechar setar em 0 (ponte h - 1)
+int abrePortaDireitaB = 50; //Para abrir setar em 0, para fechar setar em 1 (ponte h - 8)
 int motorSobe = 51;
 int motorDesce = 52;
 int motorPara = 53;
@@ -68,35 +75,37 @@ void setup() {
     pinMode(i, INPUT);
     digitalWrite(i, LOW);
   }
-  pinMode(led, OUTPUT);
+  pinMode(13, OUTPUT);
 
   //Seta os pinos como saídas digitais e seta-os como falso.
   for (int i = 45; i <= 53; i++) {
     pinMode(i, OUTPUT);
     digitalWrite(i, LOW);
   }
-  Serial.begin(9600);
   int matrizSensores[] = {22, 23, 24, 25, 26, 27};
   int matrizBotoes[] = {28, 29, 30, 31, 32, 33, 34};
 
-  Serial.begin(115200);
-  Serial.println("Menu VR"); 
+  //Inicia a comunicação Serial0 (RX=0,TX=1) em 9600 bps
+  Serial.begin(9600);
+  //Inicia a comunicação Serial1 (RX=19,TX=18) em 9600 bps
+  modulo.moduloInit(9600);
 
-  //Testa se o módulo não foi resetado
-  if(myVR.clear() == 0){
-    Serial.println("Modulo resetado.");
-  }else{
-    Serial.println("Modulo nao encontrado.");
-    Serial.println("Resolver problemas de conexao com Arduino.");
-    while(1);
+  //Testa se o módulo está respondendo. A serial envia um pacote e o lê fazendo a paridade
+  if (modulo.clear() == 0) {
+    Serial.println("Modulo respondendo.");
+  } else {
+    Serial.println("Modulo nao respondendo.");
+    Serial.println("Ha problemas de conexao entre o Arduino e o modulo.");
+    while (1);
   }
 
-  //Tenta carregar os comandos previamente gravados
-  if(myVR.load((uint8_t)comandoVozAbrir) >= 0){
+  //Tenta carregar os comandos previamente gravados.
+  //O método load retorna um inteiro (em hexadecimal)
+  if (modulo.load((uint8_t)comandoVozAbrir) >= 0) {
     Serial.println("comandoVozAbrir carregado");
   }
-  
-  if(myVR.load((uint8_t)comandoVozFechar) >= 0){
+
+  if (modulo.load((uint8_t)comandoVozFechar) >= 0) {
     Serial.println("comandoVozFechar carregado");
   }
 
@@ -172,8 +181,96 @@ void polariza() {
     Serial.print("Direita fechada | ");
   }
   Serial.println("");
-  //delay(1000);
 
+}
+
+//==========================================================================================================//
+//                                                                                                          //
+//                                           Método mostraAssinatura                                        //
+//                                                                                                          //
+//==========================================================================================================//
+
+//<ostra assinatura gravada no módulo de voz durante treinamento.
+void mostraAssinatura(uint8_t *buf, int comprimento)
+{
+  int i;
+  for (i = 0; i < comprimento; i++) {
+    if (buf[i] > 0x19 && buf[i] < 0x7F) {
+      Serial.write(buf[i]);
+    }
+    else {
+      Serial.print("[");
+      Serial.print(buf[i], HEX);
+      Serial.print("]");
+    }
+  }
+}
+
+//==========================================================================================================//
+//                                                                                                          //
+//                                                Método menuVR                                             //
+//                                                                                                          //
+//==========================================================================================================//
+
+//Mostra na porta serial o Menu do módulo
+void menuVR(uint8_t *buf)
+{
+  Serial.println("VR Indice\tGrupo\tNumeroGravacao\tAssinatura");
+
+  Serial.print(buf[2], DEC);
+  Serial.print("\t\t");
+
+  if (buf[0] == 0xFF) {
+    Serial.print("NONE");
+  }
+  else if (buf[0] & 0x80) {
+    Serial.print("UG ");
+    Serial.print(buf[0] & (~0x80), DEC);
+  }
+  else {
+    Serial.print("SG ");
+    Serial.print(buf[0], DEC);
+  }
+  Serial.print("\t");
+
+  Serial.print(buf[1], DEC);
+  Serial.print("\t\t");
+  if (buf[3] > 0) {
+    mostraAssinatura(buf + 4, buf[3]);
+  }
+  else {
+    Serial.print("Nada");
+  }
+  Serial.println("\r\n");
+}
+
+//==========================================================================================================//
+//                                                                                                          //
+//                                             Método comandoDeVoz                                          //
+//                                                                                                          //
+//==========================================================================================================//
+
+void comandoDeVoz() {
+  int ret;
+  //comandoAbertura e comandoFechamento são variáveis globais.
+  ret = modulo.recognize(buf, 50);
+  if (ret > 0) {
+    switch (buf[1]) {
+      case comandoVozAbrir:
+        comandoAbertura = true;
+        comandoFechamento = false;
+        break;
+      case comandoVozFechar:
+        comandoFechamento = true;
+        comandoAbertura = false;
+        break;
+      default:
+        Serial.println("Comando nao reconhecido");
+        break;
+    }
+    /** Voz reconhecida */
+    menuVR(buf);
+  }
 }
 
 //==========================================================================================================//
@@ -296,7 +393,13 @@ void botoes() {
     Se o botão de abertura ou fechamento da cabine for acionado ele solicita
     a abertura ou fechamento de ambas as portas até que os sensores sejam todos acionados.*/
   String lado;
-  if (digitalRead(botaoAbrePorta) && digitalRead(botaoFechaPorta)) {
+  boolean abrir = comandoAbertura || digitalRead(botaoAbrePorta);
+  boolean fechar = comandoFechamento || digitalRead(botaoFechaPorta);
+
+  Serial.println("Estado do comando de abertura: " + String(abrir));
+  Serial.println("Estado do comando de fechamento: " + String(fechar));
+
+  if (abrir && fechar) {
     //Ambos botoes pressionados simultaneamente. O controlador não atualiza os comandos
     Serial.println("Ambos botoes acionados - cabine");
     digitalWrite(abrePortaEsquerdaA, LOW);
@@ -308,7 +411,7 @@ void botoes() {
 
   }
   //Caso os sensores já estejam detectando ambas as portas abertas o loop não é realizado
-  else if (digitalRead(botaoAbrePorta) && (!sensorPEA_EP || !sensorPDA_EP)) {
+  else if (abrir && (!sensorPEA_EP || !sensorPDA_EP)) {
     Serial.println("Botao de abertura acionado - cabine");
     do {
       lado = "Esquerda";
@@ -316,12 +419,23 @@ void botoes() {
       lado = "Direita";
       abrePortas(lado);
       polariza();
+      comandoDeVoz();
+      abrir = comandoAbertura || digitalRead(botaoAbrePorta);
+      fechar = comandoFechamento || digitalRead(botaoFechaPorta);
+      Serial.println("ABRIR= " + String(abrir));
+      Serial.println("FECHAR= " + String(fechar));
+      if (sensorPEA_EP && sensorPDA_EP) {
+        comandoAbertura = false;
+        comandoFechamento = false;
+        Serial.println("Ambas portas abertas");
+      }
     }
-    while (!sensorPEA_EP && !sensorPDA_EP);
+    //Realiza o loop enquanto ambos os sensores não estiverem sido atuados e não houver comando de fechamento
+    while ((!sensorPEA_EP || !sensorPDA_EP) && !fechar);
   }
 
   //Caso os sensores já estejam detectando ambas as portas fechadas o loop não é realizado
-  else if (digitalRead(botaoFechaPorta) && (!sensorPEF_EP || !sensorPDF_EP)) {
+  else if (fechar && (!sensorPEF_EP || !sensorPDF_EP)) {
     Serial.println("Botao de fechamento acionado - cabine");
     do {
       lado = "Esquerda";
@@ -329,12 +443,25 @@ void botoes() {
       lado = "Direita";
       fechaPortas(lado);
       polariza();
+      comandoDeVoz();
+      abrir = comandoAbertura || digitalRead(botaoAbrePorta);
+      fechar = comandoFechamento || digitalRead(botaoFechaPorta);
+      Serial.println("FECHAR= " + String(fechar));
+      Serial.println("ABRIR= " + String(abrir));
+      if (sensorPEF_EP && sensorPDF_EP) {
+        comandoAbertura = false;
+        comandoFechamento = false;
+        Serial.println("Ambas portas fechadas");
+      }
     }
-    while (!sensorPEF_EP && !sensorPDF_EP);
+    //Realiza o loop enquanto ambos os sensores não estiverem sido atuados e não houver comando de abertura
+    while ((!sensorPEF_EP || !sensorPDF_EP) && !abrir);
   }
   else {
     //Nenhum botão acionado. Os motores devem parar e deixar o sistema automático os posicionar
     Serial.println("Nao ha pedido de abertura ou fechamento");
+    comandoAbertura = false;
+    comandoFechamento = false;
     digitalWrite(abrePortaEsquerdaA, LOW);
     digitalWrite(abrePortaEsquerdaB, LOW);
     digitalWrite(abrePortaDireitaA, LOW);
@@ -344,65 +471,6 @@ void botoes() {
   }
 }
 
-//==========================================================================================================//
-//                                                                                                          //
-//                                           Método mostraAssinatura                                        //
-//                                                                                                          //
-//==========================================================================================================//
-
-//<ostra assinatura gravada no módulo de voz durante treinamento.
-void mostraAssinatura(uint8_t *buf, int comprimento)
-{
-  int i;
-  for(i=0; i<comprimento; i++){
-    if(buf[i]>0x19 && buf[i]<0x7F){
-      Serial.write(buf[i]);
-    }
-    else{
-      Serial.print("[");
-      Serial.print(buf[i], HEX);
-      Serial.print("]");
-    }
-  }
-}
-
-//==========================================================================================================//
-//                                                                                                          //
-//                                                Método menuVR                                             //
-//                                                                                                          //
-//==========================================================================================================//
-
-//Mostra na porta serial o Menu do módulo
-void menuVR(uint8_t *buf)
-{
-  Serial.println("VR Indice\tGrupo\tNumeroGravacao\tAssinatura");
-
-  Serial.print(buf[2], DEC);
-  Serial.print("\t\t");
-
-  if(buf[0] == 0xFF){
-    Serial.print("NONE");
-  }
-  else if(buf[0]&0x80){
-    Serial.print("UG ");
-    Serial.print(buf[0]&(~0x80), DEC);
-  }
-  else{
-    Serial.print("SG ");
-    Serial.print(buf[0], DEC);
-  }
-  Serial.print("\t");
-
-  Serial.print(buf[1], DEC);
-  Serial.print("\t\t");
-  if(buf[3]>0){
-    mostraAssinatura(buf+4, buf[3]);
-  }
-  else{
-    Serial.print("Nada");
-  }
-  Serial.println("\r\n");
-}
 
 //==========================================================================================================//
 //                                                                                                          //
@@ -412,31 +480,14 @@ void menuVR(uint8_t *buf)
 
 void loop() {
 
-  int ret;
-  ret = myVR.recognize(buf, 50);
-  if(ret>0){
-    switch(buf[1]){
-      case comandoVozAbrir:
-        digitalWrite(led, HIGH);
-        break;
-      case comandoVozFechar:
-        digitalWrite(led, LOW);
-        break;
-      default:
-        Serial.println("Comando nao reconhecido");
-        break;
-    }
-    /** voice recognized */
-    menuVR(buf);
-  }
-
   do {
-
+    delay(1000);
     //Exibe no monitor o tempo em que o programa está rodando
     Serial.println("-------------------------------------------------------------------");
     Serial.println(String((millis() / 1000)) + " segundos ativo" );
     polariza();
     botoes();
+    comandoDeVoz();
   }
   while (Serial.available() > 0);
 
