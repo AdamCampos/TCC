@@ -1,8 +1,26 @@
 //==========================================================================================================//
 //                                                                                                          //
+//                                        Importação de Bibliotecas                                         //
+//                                                                                                          //
+//==========================================================================================================//
+
+#include <SoftwareSerial.h>
+#include "VoiceRecognitionV3.h"
+
+//==========================================================================================================//
+//                                                                                                          //
 //                                           Atributos de classe                                            //
 //                                                                                                          //
 //==========================================================================================================//
+
+//Parametrização do comando de voz. O módulo deve estar previamente treinado e carregado.
+//Método da classe VR (VoiceRecognitionV3). Seta uma porta serial com RX sendo o pino 2 do Arduino e TX o 3.
+VR myVR(2,3);
+uint8_t records[7];
+uint8_t buf[64];
+int led = 13;
+#define comandoVozAbrir    (0)
+#define comandoVozFechar   (1) 
 
 //Entradas digitais
 int sensorPortaEsquerdaAberta = 22;
@@ -20,7 +38,6 @@ int botaoAbrePorta = 33;
 int botaoFechaPorta = 34;
 
 //Saídas digitais
-
 int habilitaMotorPortaEsquerda = 45;
 int habilitaMotorPortaDireita = 46;
 int abrePortaEsquerdaA = 47; //Para abrir setar em 1, para fechar setar em 0
@@ -38,7 +55,6 @@ boolean sensorPDA_EP;
 boolean sensorPDF_EP;
 
 
-
 //==========================================================================================================//
 //                                                                                                          //
 //                                                 Método setup                                             //
@@ -46,13 +62,13 @@ boolean sensorPDF_EP;
 //==========================================================================================================//
 
 void setup() {
-  //Variáveis de classe
 
   //Seta os pinos como entradas digitais e seta-os como falso.
   for (int i = 22; i <= 34; i++) {
     pinMode(i, INPUT);
     digitalWrite(i, LOW);
   }
+  pinMode(led, OUTPUT);
 
   //Seta os pinos como saídas digitais e seta-os como falso.
   for (int i = 45; i <= 53; i++) {
@@ -62,6 +78,27 @@ void setup() {
   Serial.begin(9600);
   int matrizSensores[] = {22, 23, 24, 25, 26, 27};
   int matrizBotoes[] = {28, 29, 30, 31, 32, 33, 34};
+
+  Serial.begin(115200);
+  Serial.println("Menu VR"); 
+
+  //Testa se o módulo não foi resetado
+  if(myVR.clear() == 0){
+    Serial.println("Modulo resetado.");
+  }else{
+    Serial.println("Modulo nao encontrado.");
+    Serial.println("Resolver problemas de conexao com Arduino.");
+    while(1);
+  }
+
+  //Tenta carregar os comandos previamente gravados
+  if(myVR.load((uint8_t)comandoVozAbrir) >= 0){
+    Serial.println("comandoVozAbrir carregado");
+  }
+  
+  if(myVR.load((uint8_t)comandoVozFechar) >= 0){
+    Serial.println("comandoVozFechar carregado");
+  }
 
 }
 //==========================================================================================================//
@@ -309,24 +346,62 @@ void botoes() {
 
 //==========================================================================================================//
 //                                                                                                          //
-//                                              Método cronometro                                           //
+//                                           Método mostraAssinatura                                        //
 //                                                                                                          //
 //==========================================================================================================//
 
-/* Este método retorna o tempo que um evento demorou, recebendo um valor de tempo como argumento e a
-  condição do evento como boleano*/
-
-long cronometro(long tempo, boolean evento) {
-
-  long tempoPassado;
-
-  do {
-    tempoPassado = millis() - tempo;
+//<ostra assinatura gravada no módulo de voz durante treinamento.
+void mostraAssinatura(uint8_t *buf, int comprimento)
+{
+  int i;
+  for(i=0; i<comprimento; i++){
+    if(buf[i]>0x19 && buf[i]<0x7F){
+      Serial.write(buf[i]);
+    }
+    else{
+      Serial.print("[");
+      Serial.print(buf[i], HEX);
+      Serial.print("]");
+    }
   }
-  while (evento);
+}
 
-  return tempoPassado;
+//==========================================================================================================//
+//                                                                                                          //
+//                                                Método menuVR                                             //
+//                                                                                                          //
+//==========================================================================================================//
 
+//Mostra na porta serial o Menu do módulo
+void menuVR(uint8_t *buf)
+{
+  Serial.println("VR Indice\tGrupo\tNumeroGravacao\tAssinatura");
+
+  Serial.print(buf[2], DEC);
+  Serial.print("\t\t");
+
+  if(buf[0] == 0xFF){
+    Serial.print("NONE");
+  }
+  else if(buf[0]&0x80){
+    Serial.print("UG ");
+    Serial.print(buf[0]&(~0x80), DEC);
+  }
+  else{
+    Serial.print("SG ");
+    Serial.print(buf[0], DEC);
+  }
+  Serial.print("\t");
+
+  Serial.print(buf[1], DEC);
+  Serial.print("\t\t");
+  if(buf[3]>0){
+    mostraAssinatura(buf+4, buf[3]);
+  }
+  else{
+    Serial.print("Nada");
+  }
+  Serial.println("\r\n");
 }
 
 //==========================================================================================================//
@@ -336,6 +411,24 @@ long cronometro(long tempo, boolean evento) {
 //==========================================================================================================//
 
 void loop() {
+
+  int ret;
+  ret = myVR.recognize(buf, 50);
+  if(ret>0){
+    switch(buf[1]){
+      case comandoVozAbrir:
+        digitalWrite(led, HIGH);
+        break;
+      case comandoVozFechar:
+        digitalWrite(led, LOW);
+        break;
+      default:
+        Serial.println("Comando nao reconhecido");
+        break;
+    }
+    /** voice recognized */
+    menuVR(buf);
+  }
 
   do {
 
