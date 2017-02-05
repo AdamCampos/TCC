@@ -1,0 +1,17 @@
+# Writing all output to: C:\Users\Adam\TCC\GIT\TCC\PROTEUS\Encapsulamento Regulador 16V.log
+set pad_wire_necking on
+bus diagonal
+fanout 5
+route 50
+clean 4
+route 50 16
+clean 4
+route 50 16
+clean 4
+route 50 16
+clean 4
+route 50 16
+clean 4
+route 50 16
+clean 4
+filter 5
