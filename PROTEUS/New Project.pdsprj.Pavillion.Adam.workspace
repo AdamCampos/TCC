@@ -11,7 +11,6 @@
      <ITEM name="Message Column Width">665</ITEM>
      <ITEM name="ShowGrid">No</ITEM>
      <ITEM name="Source Column Width">100</ITEM>
-     <ITEM name="Time Column Width">120</ITEM>
      <ITEM name="Version">100</ITEM>
     </PROPERTIES>
    </POPUP>
@@ -31,30 +30,6 @@
      <ITEM name="Watch Expression Column Width">83</ITEM>
      <ITEM name="nItems">0</ITEM>
     </PROPERTIES>
-   </POPUP>
-   <POPUP w="695" x="646" flags="00000001" y="178" h="448" pid="0" iid="190">
-    <PROPERTIES/>
-   </POPUP>
-   <POPUP w="695" x="114" flags="00000001" y="161" h="448" pid="0" iid="194">
-    <PROPERTIES/>
-   </POPUP>
-   <POPUP w="695" x="628" flags="00000001" y="270" h="448" pid="0" iid="109">
-    <PROPERTIES/>
-   </POPUP>
-   <POPUP w="695" x="560" flags="00000001" y="161" h="448" pid="0" iid="111">
-    <PROPERTIES/>
-   </POPUP>
-   <POPUP w="695" x="465" flags="00000001" y="161" h="448" pid="0" iid="169">
-    <PROPERTIES/>
-   </POPUP>
-   <POPUP w="695" x="622" flags="00000001" y="258" h="448" pid="0" iid="101">
-    <PROPERTIES/>
-   </POPUP>
-   <POPUP w="695" x="126" flags="00000001" y="187" h="448" pid="0" iid="206">
-    <PROPERTIES/>
-   </POPUP>
-   <POPUP w="695" x="648" flags="00000001" y="280" h="448" pid="0" iid="256">
-    <PROPERTIES/>
    </POPUP>
   </PWI>
  </MODULE>
