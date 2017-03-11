@@ -215,7 +215,8 @@ restart:
     }
 
     if (origemJava) {
-      webServer(String(dados)+'\n');
+      webServer(String(dados) + '\n');
+      parar = true;
     }
     else {
       webServer(String (millis() / 1000) + '\n');
@@ -301,9 +302,50 @@ void setaCima() {
 
   Serial.println("SUBINDO");
 
-  for (int i = 0; i < 2; i++) {
-    delay(1);
-    corSeta ++;
+  Serial.println("DESCENDO");
+  String strLido = "";
+  char charLido = ' ';
+  boolean origemJava = false;
+  boolean parar = false;
+  char bufferChar[8];
+  char dados[6];
+  int i = 0;
+
+  while (!parar) {
+
+
+    //Mantem loop enquanto houver dados na porta serial
+restart:
+    while (Serial.available() > 0 && !origemJava) {
+
+      //Le os 8 bytes seguintes
+      for (int  i = 0; i < 8; i++) {
+
+        bufferChar[i] = Serial.read();
+        if (bufferChar[i - 1] == '0' && bufferChar[i] == 'j') {
+          //Serial.println("PEGOU!");
+
+          for (int k = 0; k < 6; k++) {
+            dados[k] = Serial.read();
+            //Serial.println("Dados: " + String(dados));
+            delay(60);
+          }
+          origemJava = true;
+          //Serial.println("PEGOU!!! ---------------------");
+          break;
+        }
+      }
+    }
+
+    if (origemJava) {
+      webServer(String(dados) + '\n');
+      parar = true;
+    }
+    else {
+      webServer(String (millis() / 1000) + '\n');
+      //Serial.println("Esperando dados..." + String(millis()));
+    }
+    delay(50);
 
     //Faz a seta azul de fundo
     for (int i = 0; i < 45; i++) {
