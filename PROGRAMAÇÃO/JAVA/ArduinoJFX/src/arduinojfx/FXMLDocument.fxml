@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.Rectangle?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane id="AnchorPane" prefHeight="714.0" prefWidth="405.0" styleClass="fundo" stylesheets="@css/principal.css" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="arduinojfx.FXMLDocumentController">
+    <children>
+      <VBox alignment="CENTER" layoutX="50.0" layoutY="38.0">
+         <children>
+            <GridPane alignment="CENTER" layoutX="50.0" layoutY="38.0" vgap="10.0">
+              <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+              </columnConstraints>
+              <rowConstraints>
+                <RowConstraints valignment="CENTER" />
+                <RowConstraints valignment="CENTER" vgrow="SOMETIMES" />
+                <RowConstraints valignment="CENTER" vgrow="SOMETIMES" />
+                <RowConstraints valignment="CENTER" vgrow="SOMETIMES" />
+                  <RowConstraints valignment="CENTER" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+              </rowConstraints>
+               <children>
+                  <Circle fx:id="btDesce" fill="#cfd7d0" onMouseClicked="#handleBtSobe" radius="36.0" stroke="#0c95d0" strokeDashOffset="1.0" strokeLineCap="BUTT" strokeMiterLimit="5.0" strokeWidth="3.0" GridPane.columnIndex="1" />
+                  <Label onMouseClicked="#handleBtSobe" text="SOBE" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+                  <Circle fx:id="btSobe" fill="#cfd7d0" onMouseClicked="#handleBtDesce" radius="36.0" stroke="#0c95d0" strokeDashOffset="1.0" strokeLineCap="BUTT" strokeMiterLimit="5.0" strokeWidth="3.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                  <Label onMouseClicked="#handleBtDesce" text="DESCE" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER" />
+                  <Circle fx:id="btAbre" fill="#cfd7d0" layoutX="161.0" layoutY="48.0" onMouseClicked="#handleBtAbre" radius="36.0" stroke="#0c95d0" strokeDashOffset="1.0" strokeLineCap="BUTT" strokeMiterLimit="5.0" strokeWidth="3.0" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="CENTER" />
+                  <Label onMouseClicked="#handleBtAbre" text="ABRE" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="CENTER" />
+                  <Circle fx:id="btFecha" fill="#cfd7d0" layoutX="61.0" layoutY="228.0" onMouseClicked="#handleBtFecha" radius="36.0" stroke="#0c95d0" strokeDashOffset="1.0" strokeLineCap="BUTT" strokeMiterLimit="5.0" strokeWidth="3.0" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="CENTER" />
+                  <Label onMouseClicked="#handleBtFecha" text="FECHA" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="CENTER" />
+                  <Circle fx:id="btVentilacao" fill="#cfd7d0" onMouseClicked="#handleBtVentilacao" radius="36.0" stroke="#0c95d0" strokeDashOffset="1.0" strokeLineCap="BUTT" strokeMiterLimit="5.0" strokeWidth="3.0" GridPane.halignment="CENTER" GridPane.rowIndex="3" GridPane.valignment="CENTER" />
+                  <Label layoutX="46.0" layoutY="209.0" onMouseClicked="#handleBtVentilacao" text="VENTILADOR" GridPane.halignment="CENTER" GridPane.rowIndex="3" GridPane.valignment="CENTER" />
+                  <Circle fx:id="btIluminacao" fill="#cfd7d0" layoutX="61.0" layoutY="303.0" onMouseClicked="#handleBtIluminacao" radius="36.0" stroke="#0c95d0" strokeDashOffset="1.0" strokeLineCap="BUTT" strokeMiterLimit="5.0" strokeWidth="3.0" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="3" GridPane.valignment="CENTER" />
+                  <Label layoutX="25.0" layoutY="294.0" onMouseClicked="#handleBtIluminacao" text="ILUMINAÇÃO" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="3" GridPane.valignment="CENTER" />
+                  <Circle fx:id="btVentilacao1" fill="#cfd7d0" layoutX="61.0" layoutY="303.0" onMouseClicked="#handleBtEmergencia" radius="36.0" stroke="#0c95d0" strokeDashOffset="1.0" strokeLineCap="BUTT" strokeMiterLimit="5.0" strokeWidth="3.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                  <Label layoutX="25.0" layoutY="294.0" onMouseClicked="#handleBtEmergencia" text="EMERGÊNCIA" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+               </children>
+            </GridPane>
+            <StackPane>
+               <children>
+                  <Rectangle arcHeight="50.0" arcWidth="50.0" fill="#020461" height="109.0" layoutX="50.0" layoutY="475.0" stroke="WHITE" strokeType="INSIDE" width="230.0" />
+                  <Label fx:id="numeroDisplay" alignment="CENTER" contentDisplay="CENTER" graphicTextGap="1.0" textAlignment="CENTER" textFill="#f7f7f7">
+                     <font>
+                        <Font name="Calibri" size="79.0" />
+                     </font>
+                  </Label>
+               </children>
+            </StackPane>
+         </children>
+      </VBox>
+    </children>
+</AnchorPane>
