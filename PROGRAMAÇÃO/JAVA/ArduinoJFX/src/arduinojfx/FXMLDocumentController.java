@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.shape.Circle;
@@ -24,6 +25,10 @@ public class FXMLDocumentController implements Initializable, Observer {
 
     @FXML
     private Label numeroDisplay;
+    
+    @FXML
+    private ImageView imgCadeira;
+    
 
     @FXML
     private void handleBtSobe() {

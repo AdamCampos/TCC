@@ -6,6 +6,9 @@
     -fx-background-color: #FF0000;
 }.botoesAcionados {
     -fx-background-color: #C6E2FF;
+}.display {
+    -fx-font-size: 40px;
+    -fx-font-family:'Badloc ICG';
 }
 
 

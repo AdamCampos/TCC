@@ -48,7 +48,7 @@
             </GridPane>
             <StackPane>
                <children>
-                  <Rectangle arcHeight="50.0" arcWidth="50.0" fill="#020461" height="109.0" layoutX="50.0" layoutY="475.0" stroke="WHITE" strokeType="INSIDE" width="230.0" />
+                  <Rectangle arcHeight="50.0" arcWidth="50.0" fill="#020461" height="109.0" layoutX="50.0" layoutY="475.0" stroke="WHITE" strokeType="INSIDE" styleClass="display" width="230.0" />
                   <Label fx:id="numeroDisplay" alignment="CENTER" contentDisplay="CENTER" graphicTextGap="1.0" textAlignment="CENTER" textFill="#f7f7f7">
                      <font>
                         <Font name="Calibri" size="79.0" />

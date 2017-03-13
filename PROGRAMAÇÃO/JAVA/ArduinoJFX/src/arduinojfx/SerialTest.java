@@ -29,7 +29,8 @@ public class SerialTest extends java.util.Observable implements SerialPortEventL
         CommPortIdentifier portId = null;
         
         try {
-            portId = CommPortIdentifier.getPortIdentifier("COM4");
+            //portId = CommPortIdentifier.getPortIdentifier("COM4");
+            portId = CommPortIdentifier.getPortIdentifier("COM9");
         } catch (NoSuchPortException ex) {
             Logger.getLogger(SerialTest.class.getName()).log(Level.SEVERE, null, ex);
         }
