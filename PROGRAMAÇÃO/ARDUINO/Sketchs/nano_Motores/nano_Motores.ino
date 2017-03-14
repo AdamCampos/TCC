@@ -22,8 +22,8 @@ static long microsec = sensorDistancia.timing();
 static float distancia = sensorDistancia.convert(microsec, Ultrasonic::CM);
 
 //Demais varaveis
-static long tempoInicial = millis();
-static long tempoFinal = millis();
+static float tempoInicial = 0;
+static float tempoFinal = 0;
 boolean comandoAberturaEsquerda = false;
 boolean comandoFechamentoEsquerda = false;
 boolean comandoAberturaDireita = false;
@@ -40,12 +40,16 @@ int pinoPEA = 0;
 int pinoPEF = 0;
 int pinoPDA = 0;
 int pinoPDF = 0;
-int saidaAMD;
-int saidaBMD;
-int saidaAME;
-int saidaBME;
-volatile int codigoPergunta;
-volatile int valorPergunta;
+int saidaAMD = 0;
+int saidaBMD = 0;
+int saidaAME = 0;
+int saidaBME = 0;
+volatile float deltaT = 0.00;
+volatile float deltaD = 0.00;
+static float dInicial = 0.00;
+static float dFinal = 0.00;
+volatile int codigoPergunta = 0;
+volatile int valorPergunta = 0;
 //-----------------------------------------------------------------------------------------------------------//
 //                                                                                                           //
 //                                                      Metodo setup                                         //
@@ -112,20 +116,10 @@ void fechamento() {
 
   while (!pdf || !pef) //Realiza o loop enquanto uma das portas ainda nao estiver totalmente fechada
   {
-
     pea = digitalRead(pinoPEA);
     pef = !digitalRead(pinoPEF);
     pdf = !digitalRead(pinoPDF);
     pda = digitalRead(pinoPDA);
-
-    Serial.println("PEA:= " + String(pea));
-    delay(20);
-    Serial.println("PEF:= " + String(pef));
-    delay(20);
-    Serial.println("PDF:= " + String(pdf));
-    delay(20);
-    Serial.println("PDA:= " + String(pda));
-    delay(20);
 
     if (!pdf) //Testa se a porta da direita se fechou completamente
       //Observar que a porta quando fechada pdf vai de 1 para 0.
@@ -141,7 +135,7 @@ void fechamento() {
     }
     if (!pef) //Testa se a porta da esquerda se fechou completamente
       //Observar que a porta quando fechada pef vai de 1 para 0.
-      //Caso nÃ£o esteja fechada ainda, mantÃ©m comando de fechamento.
+      //Caso nao esteja fechada ainda, mantÃ©m comando de fechamento.
     {
       digitalWrite(saidaAME, LOW);
       digitalWrite(saidaBME, HIGH);
@@ -160,6 +154,8 @@ void fechamento() {
   digitalWrite(saidaBME, LOW);
   digitalWrite(saidaAMD, LOW);
   digitalWrite(saidaBMD, LOW);
+
+  fechadas = true;
 
 
 }
@@ -191,15 +187,6 @@ void abertura() {
     pef = !digitalRead(pinoPEF);
     pdf = !digitalRead(pinoPDF);
     pda = digitalRead(pinoPDA);
-
-    Serial.println("PEA:= " + String(pea));
-    delay(20);
-    Serial.println("PEF:= " + String(pef));
-    delay(20);
-    Serial.println("PDF:= " + String(pdf));
-    delay(20);
-    Serial.println("PDA:= " + String(pda));
-    delay(20);
 
     if (!pda) //Testa se a porta da direita se abriu completamente
       //Observar que a porta quando aberta pda vai de 0 para 1.
@@ -238,6 +225,8 @@ void abertura() {
   digitalWrite(saidaAME, LOW);
   digitalWrite(saidaBME, LOW);
 
+  fechadas = false;
+
 }
 
 //-----------------------------------------------------------------------------------------------------------//
@@ -247,31 +236,33 @@ void abertura() {
 //-----------------------------------------------------------------------------------------------------------//
 void loopPortas() {
 
-
-
+inicio:
+  //Le e atualiza o estado de cada sensor.
   pea = digitalRead(pinoPEA);
   pef = !digitalRead(pinoPEF);
   pdf = !digitalRead(pinoPDF);
   pda = digitalRead(pinoPDA);
 
-  boolean testeInicial = false;
-  if (pda == 0 && pdf == 0 && pea == 0 && pef == 0)
-  { testeInicial = true;
-    Serial.println("Condicao 0");
-  }
-  if (pdf && pef || testeInicial) //se ambas as portas estiverem totalmente fechadas, entra no loop
+  if (pdf && pef) //se ambas as portas estiverem totalmente fechadas, entra no loop de abertura
   {
     abertura();
-    //Atraso entre a abertura e fechamento
-    delay(3000);
   }
-
-  if (pda && pea || testeInicial) //se ambas as portas estiverem totalmente abertas, entra no loop
+  else if (pda && pea) //se ambas as portas estiverem totalmente abertas, entra no loop de fechamento
   {
     fechamento();
-    //Atraso entre a abertura e fechamento
-    delay(3000);
   }
+
+  else if (pda || pea || !pef || !pdf) //uma porta aberta pelo menos
+  {
+    fechamento();
+    goto inicio;
+  }
+  else {
+    Serial.println("Sensores com anomalia");
+  }
+  //Intervalo entre abertura e fechamento
+  delay(2000);
+
 
 }
 
@@ -283,30 +274,37 @@ void loopPortas() {
 
 void subir() {
 
+  //Primeira medida da rotina e fechar ambas as portas. Por padarao a variavel 'fechadas' inicia-se como false.
   if (!fechadas) {
-    //fechamento();
+    fechamento();
     fechadas = true;
   }
-
   //Entra no loop enquanto nao atingir a altura setada
-
   microsec = sensorDistancia.timing();
   distancia = sensorDistancia.convert(microsec, Ultrasonic::CM);
+  dInicial = distancia;
+  Serial.println("Inicio da subida");
+  tempoInicial = millis() / 1000;
 
+  //Distancia entre o sensor e a cabine em centimetros.
   while (distancia >= 30) {
     microsec = sensorDistancia.timing();
     distancia = sensorDistancia.convert(microsec, Ultrasonic::CM);
-    Serial.println("Subindo " + String(distancia));
-
-    digitalWrite(A0, HIGH);
-    digitalWrite(A1, HIGH);
-    digitalWrite(A2, LOW);
+    digitalWrite(A0, HIGH);  // Permisiividade
+    digitalWrite(A1, HIGH);  // Sobe
+    digitalWrite(A2, LOW);   // Desce
+    //Serial.println("<< " + String(distancia));
+    dFinal = distancia;
   }
-
-
   //Bloqueia a ponte
   digitalWrite(A0, LOW);
-
+  Serial.println("Fim da subida");
+  tempoFinal = millis() / 1000;
+  deltaT = tempoFinal - tempoInicial;
+  deltaD = dFinal - dInicial;
+  Serial.println("Subida em: " + String(deltaT) + " s");
+  Serial.println("Distancia percorrida: " + String(-deltaD) + " cm");
+  Serial.println("Velocidade linear de subida: " + String(-deltaD / deltaT) + " cm/s");
 }
 
 //-----------------------------------------------------------------------------------------------------------//
@@ -317,32 +315,40 @@ void subir() {
 
 void descer() {
 
+  //Primeira medida da rotina e fechar ambas as portas. Por padarao a variavel 'fechadas' inicia-se como false.
   if (!fechadas) {
-    //fechamento();
+    fechamento();
     fechadas = true;
   }
 
+  Serial.println("Inicio da descida");
   microsec = sensorDistancia.timing();
   distancia = sensorDistancia.convert(microsec, Ultrasonic::CM);
+  dInicial = distancia;
+  tempoInicial = millis() / 1000;
 
   //Entra no loop enquanto nao atingir a altura setada
   while (distancia <= 80) {
     microsec = sensorDistancia.timing();
     distancia = sensorDistancia.convert(microsec, Ultrasonic::CM);
 
-    Serial.println("Descendo " + String(distancia));
-
-    digitalWrite(A0, HIGH); //Permissivo
-    digitalWrite(A1, LOW);
-    digitalWrite(A2, HIGH);
+    digitalWrite(A0, HIGH); // Permissividade
+    digitalWrite(A1, LOW);  // Sobe
+    digitalWrite(A2, HIGH); // Desce
+    //Serial.println(">> " + String(distancia));
+    dFinal = distancia;
   }
 
   //Fim do loop
   //Coloca o permissivo em 0, bloqueando a ponte
   digitalWrite(A0, LOW);
-
-  Serial.println("Termino de descida");
-
+  Serial.println("Fim da descida");
+  tempoFinal = millis() / 1000;
+  deltaT = tempoFinal - tempoInicial;
+  deltaD = dFinal - dInicial;
+  Serial.println("Descida em: " + String(tempoFinal - tempoInicial) + " s");
+  Serial.println("Distancia percorrida: " + String(deltaD) + " cm");
+  Serial.println("Velocidade linear de descida: " + String((dFinal - dInicial) / (tempoFinal - tempoInicial)) + "cm/s");
 }
 
 //-----------------------------------------------------------------------------------------------------------//
@@ -353,32 +359,25 @@ void descer() {
 
 void loopMotores() {
 
-  //Metodo apenas para debug e comissionamento
-  /*-------------------------------------------------------------------------------------------------------------*/
-  //Condicoes iniciais (devera ser usado para Warm-up)
   //Coloca o permissivo em 0, bloqueando a ponte
   digitalWrite(A0, LOW);
-  Serial.println("Distancia inicial: " + String(distancia));
-
-  /*-------------------------------------------------------------------------------------------------------------*/
 
   //Sobe
-  tempoInicial = millis() / 100;
-  //subir();
-  tempoFinal = millis() / 100;
-  digitalWrite(A0, LOW);
-  ///Serial.println("Subida em " + String(tempoFinal - tempoInicial));
+  Serial.println("---------------------------------------------------------------------------------------------");
+  subir();
+  Serial.println("---------------------------------------------------------------------------------------------");
 
   //Loop das portas
+  delay(2000);
   loopPortas();
 
   //Desce
-  tempoInicial = millis() / 100;
-  //descer();
-  tempoFinal = millis() / 100;
-  ///Serial.println("Descida em " + String(tempoFinal - tempoInicial));
+  Serial.println("---------------------------------------------------------------------------------------------");
+  descer();
+  Serial.println("---------------------------------------------------------------------------------------------");
 
   //Loop das portas
+  delay(2000);
   loopPortas();
 
 }
@@ -401,7 +400,7 @@ void loop() {
 
   microsec = sensorDistancia.timing();
   distancia = sensorDistancia.convert(microsec, Ultrasonic::CM);
-  //Serial.println(String(distancia));
+  //Serial.println("Posicao inicial da cabine: " + String(distancia));
 
   /*-------------------------------------------------------------------------------------------------------------*/
   //Inicia testes dos motores. Faz as portas se fecharem, sobe a cabine, abre as portas, fecha as portas

@@ -1,7 +1,3 @@
-// IMPORTANT: Adafruit_TFTLCD LIBRARY MUST BE SPECIFICALLY
-// CONFIGUVERMELHO FOR EITHER THE TFT SHIELD OR THE BREAKOUT BOARD.
-// SEE RELEVANT COMMENTS IN Adafruit_TFTLCD.h FOR SETUP.
-
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_TFTLCD.h> // Hardware-specific library
 #include <stdint.h>
@@ -141,10 +137,10 @@ void setup() {
   |                                                                                                                                       |
 ****************************************************************************************************************************************/
 
-//Este metodo conectao controlador ao modulo Ethernet, fazendo o modulo responder como um webserver, ou seja, um provedor de dados
+//Este metodo conecta o controlador ao modulo Ethernet, fazendo o modulo responder como um webserver, ou seja, um provedor de dados
 //para clienteWebes web, como navegadores. O codigo abaixo cria a pagina em html, podendo usar o cartao sd para armazenar css e js por
 //exemplo. Na aplicacao o webserver prove dados vindos do codigo interno do controlador escritos nas demais areas deste codigo e
-//dados provenientes de outras fontes, como um aplicativo suÂ´pervisorio escrito em java e comunicacao por porta serial.
+//dados provenientes de outras fontes, como um aplicativo sua pervisorio escrito em java e comunicacao por porta serial.
 
 void webServer(String serial) {
 
@@ -181,9 +177,9 @@ void webServer(String serial) {
           clienteWeb.print("Java --> ");
           clienteWeb.println(String(serial));
           clienteWeb.println("<br/>");
-          clienteWeb.println("<a href=/?on2 >ON</a>");
-          clienteWeb.println("<a href=/?off3 >OFF</a>");
-          clienteWeb.println("&nbsp;<a href=/?off357 >ALL OFF</a><br><br>");
+          clienteWeb.println("<a href=/?on2 >LIGA</a>");
+          clienteWeb.println("<a href=/?off3 >DESLIGA</a>");
+          clienteWeb.println("&nbsp;<a href=/?off357 >DESLIGA</a><br><br>");
           clienteWeb.println("</html>");
         }
         if (c == '\n') {
@@ -451,10 +447,10 @@ restart:
 
 void numeroDisplay(String numero) {
 
-  //Desenha cÃ­rculo em volta do numeral
+  //Desenha circulo em volta do numeral
   for (int i = 0; i < 20; i++) {
     tft.drawCircle((tft.width() / 2), (tft.height() / 2), 65 + i, 7 + 3 * i);
-    //Desenha o nÃºmero do pavimento (1)
+    //Desenha o numero do pavimento
     tft.setCursor((tft.width() / 2) - 35, (tft.height() / 2) - 55);
     tft.setTextColor(7 + 6 * i);
     tft.setTextSize(15);
@@ -469,6 +465,31 @@ void numeroDisplay(String numero) {
 
     if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
       Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
+      break;
+    }
+
+
+    int ret;
+    ret = myVR.recognize(buf, 50);
+    if (ret > 0) {
+      switch (buf[1]) {
+        case vozAbre:
+          Serial.println("Comando " + String(buf[1]));
+          break;
+        case vozFecha:
+          Serial.println("Comando " + String(buf[1]));
+          break;
+        case vozSobe:
+          Serial.println("Comando " + String(buf[1]));
+          break;
+        case vozDesce:
+          Serial.println("Comando " + String(buf[1]));
+          break;
+        default:
+          Serial.println("Voz nao reconhecida");
+          break;
+
+      }
       break;
     }
   }
@@ -539,28 +560,6 @@ void loop() {
 
   }
   delay(20);
-
-  int ret;
-  ret = myVR.recognize(buf, 50);
-  if (ret > 0) {
-    switch (buf[1]) {
-      case vozAbre:
-        Serial.println("Comando " + String(buf[1]));
-        break;
-      case vozFecha:
-        Serial.println("Comando " + String(buf[1]));
-        break;
-      case vozSobe:
-        Serial.println("Comando " + String(buf[1]));
-        break;
-      case vozDesce:
-        Serial.println("Comando " + String(buf[1]));
-        break;
-      default:
-        Serial.println("Voz nao reconhecida");
-        break;
-    }
-  }
 
 }
 
