@@ -15,11 +15,16 @@ AltSoftSerial serialExtra; //TX=9 RX=8
 
 //Ultrassonico
 #include <Ultrasonic.h>
-#define TRIGGER_PIN  6 // (3 no flat)
-#define ECHO_PIN     7 // (2 no flat)
+#define TRIGGER_PIN  6   // 
+#define ECHO_PIN     7   //
+#define TRIGGER2_PIN  18 // A04
+#define ECHO2_PIN     19  // A05
 Ultrasonic sensorDistancia(TRIGGER_PIN, ECHO_PIN);
+Ultrasonic sensorDistancia2(TRIGGER2_PIN, ECHO2_PIN);
 static long microsec = sensorDistancia.timing();
 static float distancia = sensorDistancia.convert(microsec, Ultrasonic::CM);
+static long microsec2 = sensorDistancia2.timing();
+static float distancia2 = sensorDistancia2.convert(microsec2, Ultrasonic::CM);
 
 //Demais varaveis
 static float tempoInicial = 0;
@@ -50,6 +55,10 @@ static float dInicial = 0.00;
 static float dFinal = 0.00;
 volatile int codigoPergunta = 0;
 volatile int valorPergunta = 0;
+
+// Pre compilacao dos metodos
+void abertura();
+void fechamento();
 //-----------------------------------------------------------------------------------------------------------//
 //                                                                                                           //
 //                                                      Metodo setup                                         //
@@ -92,6 +101,9 @@ void setup() {
   pinMode(A1, OUTPUT); //Saida A - Sentido de subida
   pinMode(A2, OUTPUT); //Saida A' - Sentido de descida
 
+  //Sensores dos diodos laser
+  pinMode(A3, INPUT);  //Vem da porta AND de 4 entradas
+
 
 }
 
@@ -120,6 +132,18 @@ void fechamento() {
     pef = !digitalRead(pinoPEF);
     pdf = !digitalRead(pinoPDF);
     pda = digitalRead(pinoPDA);
+
+    //Testa se o usuario cortou a cortina de luz (1=cortina atvada)
+    if (!digitalRead(A3)) {
+      Serial.println("Cortina de luz interrompida!");
+      // Para o fechamento das portas e as reabre
+      digitalWrite(saidaAME, LOW);
+      digitalWrite(saidaBME, LOW);
+      digitalWrite(saidaAMD, LOW);
+      digitalWrite(saidaBMD, LOW);
+      abertura();
+      break;
+    }
 
     if (!pdf) //Testa se a porta da direita se fechou completamente
       //Observar que a porta quando fechada pdf vai de 1 para 0.
@@ -276,24 +300,28 @@ void subir() {
 
   //Primeira medida da rotina e fechar ambas as portas. Por padarao a variavel 'fechadas' inicia-se como false.
   if (!fechadas) {
-    fechamento();
+    //fechamento();
     fechadas = true;
   }
   //Entra no loop enquanto nao atingir a altura setada
   microsec = sensorDistancia.timing();
   distancia = sensorDistancia.convert(microsec, Ultrasonic::CM);
+  microsec2 = sensorDistancia2.timing();
+  distancia2 = sensorDistancia2.convert(microsec2, Ultrasonic::CM);
   dInicial = distancia;
   Serial.println("Inicio da subida");
   tempoInicial = millis() / 1000;
 
   //Distancia entre o sensor e a cabine em centimetros.
-  while (distancia >= 30) {
+  while (distancia >= 30 && distancia2 <= 72) {
     microsec = sensorDistancia.timing();
     distancia = sensorDistancia.convert(microsec, Ultrasonic::CM);
-    digitalWrite(A0, HIGH);  // Permisiividade
+    microsec2 = sensorDistancia2.timing();
+    distancia2 = sensorDistancia2.convert(microsec2, Ultrasonic::CM);
+    digitalWrite(A0, HIGH);  // Permisividade
     digitalWrite(A1, HIGH);  // Sobe
     digitalWrite(A2, LOW);   // Desce
-    //Serial.println("<< " + String(distancia));
+    //Serial.println("++ 1) " + String(distancia) + " 2) " + String(distancia2));
     dFinal = distancia;
   }
   //Bloqueia a ponte
@@ -317,25 +345,29 @@ void descer() {
 
   //Primeira medida da rotina e fechar ambas as portas. Por padarao a variavel 'fechadas' inicia-se como false.
   if (!fechadas) {
-    fechamento();
+    //fechamento();
     fechadas = true;
   }
 
   Serial.println("Inicio da descida");
   microsec = sensorDistancia.timing();
   distancia = sensorDistancia.convert(microsec, Ultrasonic::CM);
+  microsec2 = sensorDistancia2.timing();
+  distancia2 = sensorDistancia2.convert(microsec2, Ultrasonic::CM);
   dInicial = distancia;
   tempoInicial = millis() / 1000;
 
   //Entra no loop enquanto nao atingir a altura setada
-  while (distancia <= 80) {
+  while (distancia <= 80 && distancia2 >= 20) {
     microsec = sensorDistancia.timing();
     distancia = sensorDistancia.convert(microsec, Ultrasonic::CM);
+    microsec2 = sensorDistancia2.timing();
+    distancia2 = sensorDistancia2.convert(microsec2, Ultrasonic::CM);
 
     digitalWrite(A0, HIGH); // Permissividade
     digitalWrite(A1, LOW);  // Sobe
     digitalWrite(A2, HIGH); // Desce
-    //Serial.println(">> " + String(distancia));
+    //Serial.println("-- 1) " + String(distancia) + " 2) " + String(distancia2));
     dFinal = distancia;
   }
 
@@ -346,9 +378,9 @@ void descer() {
   tempoFinal = millis() / 1000;
   deltaT = tempoFinal - tempoInicial;
   deltaD = dFinal - dInicial;
-  Serial.println("Descida em: " + String(tempoFinal - tempoInicial) + " s");
+  Serial.println("Descida em: " + String(deltaT) + " s");
   Serial.println("Distancia percorrida: " + String(deltaD) + " cm");
-  Serial.println("Velocidade linear de descida: " + String((dFinal - dInicial) / (tempoFinal - tempoInicial)) + "cm/s");
+  Serial.println("Velocidade linear de descida: " + String((dFinal - dInicial) / (deltaT)) + "cm/s");
 }
 
 //-----------------------------------------------------------------------------------------------------------//
@@ -369,7 +401,7 @@ void loopMotores() {
 
   //Loop das portas
   delay(2000);
-  loopPortas();
+  //loopPortas();
 
   //Desce
   Serial.println("---------------------------------------------------------------------------------------------");
@@ -377,8 +409,8 @@ void loopMotores() {
   Serial.println("---------------------------------------------------------------------------------------------");
 
   //Loop das portas
-  delay(2000);
-  loopPortas();
+  //delay(2000);
+  //loopPortas();
 
 }
 
@@ -396,15 +428,20 @@ void loop() {
   digitalWrite(A1, LOW);
   digitalWrite(A2, !digitalRead(A1));
 
-  //Serial.println("Incio da rotina NANO "+ String(millis()/1000));
-
   microsec = sensorDistancia.timing();
   distancia = sensorDistancia.convert(microsec, Ultrasonic::CM);
-  //Serial.println("Posicao inicial da cabine: " + String(distancia));
+  Serial.println("Distancia: " + String(distancia));
 
-  /*-------------------------------------------------------------------------------------------------------------*/
-  //Inicia testes dos motores. Faz as portas se fecharem, sobe a cabine, abre as portas, fecha as portas
-  // desce a cabine, abre novamente as portas e torna a fechÃ¡-las em um loop infinito. Escrito para comissionamento
+  microsec2 = sensorDistancia2.timing();
+  distancia2 = sensorDistancia2.convert(microsec2, Ultrasonic::CM);
+  Serial.println("Distancia 2: " + String(distancia2));
+
+  /* Inicia testes dos motores. Faz as portas se fecharem, sobe a cabine, abre as portas, fecha as portas novamente
+    desce a cabine, abre novamente as portas e torna a fecha-las em um loop infinito.
+    Este loop e apenas para teste de comissionamento.*/
+  //  delay(15000);
+  //  digitalWrite(A0, HIGH); //Permissividade
+  //  delay(15000);
   loopMotores();
 
   ////Escritas no UNO
