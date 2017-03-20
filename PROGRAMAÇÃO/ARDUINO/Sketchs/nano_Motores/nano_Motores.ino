@@ -5,7 +5,7 @@
    1) deve analisar qual foi o pedido, se e de abertura ou fechamento;
    2) deve analisar onde esta posicionada a cabine;
    3) deve analisar os estados de cada um dos quatro sensores de fim-de-curso das portas;
-   5) se possÃ­vel deve iniciar o pedido e observa-lo ate o final
+   5) se possivel deve iniciar o pedido e observa-lo ate o final
    6) deve retornar o resultado a quem fez o pedido
 */
 
@@ -68,7 +68,7 @@ void fechamento();
 void setup() {
 
   Serial.begin(9600);
-  serialExtra.begin(9600);   //Parametriza porta serial extra
+  serialExtra.begin(9600);
 
   //Sensores de fim de curso
   pinoPEA = 2;
@@ -134,16 +134,16 @@ void fechamento() {
     pda = digitalRead(pinoPDA);
 
     //Testa se o usuario cortou a cortina de luz (1=cortina atvada)
-    if (!digitalRead(A3)) {
-      Serial.println("Cortina de luz interrompida!");
-      // Para o fechamento das portas e as reabre
-      digitalWrite(saidaAME, LOW);
-      digitalWrite(saidaBME, LOW);
-      digitalWrite(saidaAMD, LOW);
-      digitalWrite(saidaBMD, LOW);
-      abertura();
-      break;
-    }
+    //    if (!digitalRead(A3)) {
+    //      Serial.println("Cortina de luz interrompida!");
+    //      // Para o fechamento das portas e as reabre
+    //      digitalWrite(saidaAME, LOW);
+    //      digitalWrite(saidaBME, LOW);
+    //      digitalWrite(saidaAMD, LOW);
+    //      digitalWrite(saidaBMD, LOW);
+    //      abertura();
+    //      break;
+    //    }
 
     if (!pdf) //Testa se a porta da direita se fechou completamente
       //Observar que a porta quando fechada pdf vai de 1 para 0.
@@ -159,7 +159,7 @@ void fechamento() {
     }
     if (!pef) //Testa se a porta da esquerda se fechou completamente
       //Observar que a porta quando fechada pef vai de 1 para 0.
-      //Caso nao esteja fechada ainda, mantÃ©m comando de fechamento.
+      //Caso nao esteja fechada ainda, mantÃƒÆ’Ã‚Â©m comando de fechamento.
     {
       digitalWrite(saidaAME, LOW);
       digitalWrite(saidaBME, HIGH);
@@ -300,7 +300,7 @@ void subir() {
 
   //Primeira medida da rotina e fechar ambas as portas. Por padarao a variavel 'fechadas' inicia-se como false.
   if (!fechadas) {
-    //fechamento();
+    fechamento();
     fechadas = true;
   }
   //Entra no loop enquanto nao atingir a altura setada
@@ -345,7 +345,7 @@ void descer() {
 
   //Primeira medida da rotina e fechar ambas as portas. Por padarao a variavel 'fechadas' inicia-se como false.
   if (!fechadas) {
-    //fechamento();
+    fechamento();
     fechadas = true;
   }
 
@@ -400,8 +400,8 @@ void loopMotores() {
   Serial.println("---------------------------------------------------------------------------------------------");
 
   //Loop das portas
-  delay(2000);
-  //loopPortas();
+  delay(120000);
+  loopPortas();
 
   //Desce
   Serial.println("---------------------------------------------------------------------------------------------");
@@ -409,8 +409,8 @@ void loopMotores() {
   Serial.println("---------------------------------------------------------------------------------------------");
 
   //Loop das portas
-  //delay(2000);
-  //loopPortas();
+  delay(120000);
+  loopPortas();
 
 }
 
@@ -424,113 +424,54 @@ void loopMotores() {
 void loop() {
 
   //Mantem a ponte bloqueada e garante A diferente de A'
-  digitalWrite(A0, LOW); //Permissividade
-  digitalWrite(A1, LOW);
-  digitalWrite(A2, !digitalRead(A1));
-
-  microsec = sensorDistancia.timing();
-  distancia = sensorDistancia.convert(microsec, Ultrasonic::CM);
-  Serial.println("Distancia: " + String(distancia));
-
-  microsec2 = sensorDistancia2.timing();
-  distancia2 = sensorDistancia2.convert(microsec2, Ultrasonic::CM);
-  Serial.println("Distancia 2: " + String(distancia2));
+  //  digitalWrite(A0, LOW); //Permissividade
+  //  digitalWrite(A1, LOW);
+  //  digitalWrite(A2, !digitalRead(A1));
 
   /* Inicia testes dos motores. Faz as portas se fecharem, sobe a cabine, abre as portas, fecha as portas novamente
     desce a cabine, abre novamente as portas e torna a fecha-las em um loop infinito.
     Este loop e apenas para teste de comissionamento.*/
-  //  delay(15000);
-  //  digitalWrite(A0, HIGH); //Permissividade
-  //  delay(15000);
-  loopMotores();
+  //loopMotores();
 
-  ////Escritas no UNO
-  ////    distancia = sensorDistancia.convert(sensorDistancia.timing(), Ultrasonic::CM);
-  ////    byte protocolo[]={1,distancia}; //Armazena o valor da distÃ¢ncia da cabine ao sensor
-  ////    if(serialExtra.available()==0){ //So inicia transmissao se o buffer estiver vazio
-  ////    //Serial.println("Enviando: " + String(distancia));
-  ////    serialExtra.write(protocolo,2); //Manda 2 bytes para o Uno. O primeiro byte Ã© o cÃ³dgo da resposra.
-  ////                                    //O segundo byte Ã© o valor da resposta
-  ////
-  ////          while(serialExtra.available()>0){
-  ////            int t = serialExtra.read();
-  ////            Serial.println("Consumindo buffer");
-  ////            }
-  ////
-  ////    }else{
-  ////      //Serial.println("Buffer cheio");
-  ////      }
-  //
-  ///*-------------------------------------------------------------------------------------------------------------*/
-  //
-  ////Leituras do UNO
-  //  if(serialExtra.available()==2){ //O byte 2 contem os codigo das perguntas
-  //    codigoPergunta = serialExtra.read();
-  //
-  //        if(serialExtra.available()==1){ //O byte 1 contem o valor da pergunta
-  //        valorPergunta = serialExtra.read();
-  //
-  //      }
-  //  }
-  //
-  //if(serialExtra.available()==0){
-  //   if(codigoPergunta==255){
-  //   Serial.println("UNO perguntou: " + String(codigoPergunta) + "|" + String(valorPergunta));
-  //
-  //    //DESCIDA
-  //    if(valorPergunta==3){
-  //      //Solicita que a cabine desça ao primeiro piso
-  //      Serial.println("Enviando fim de descida - fila");
-  //      descer();
-  //    while(serialExtra.available()){
-  //    int t = serialExtra.read();
-  //    }
-  //      byte protocolo[]={3,1}; //Envia o código de resposta à pergunta 3 com resposta 1
-  //          if(serialExtra.available()==0){ //So inicia transmissao se o buffer estiver vazio
-  //          Serial.println("Enviando fim de descida");
-  //          serialExtra.write(protocolo,2); //Manda 2 bytes para o Uno. O primeiro byte eh o codigo da resposra.
-  //                                          //O segundo byte e o valor da resposta
-  //          codigoPergunta = 0;
-  //          valorPergunta = 0;
-  //          fechadas = false;
-  //      delay(1000);
-  //      abertura();
-  //      }
-  //   }
-  //
-  //
-  //
-  //
-  //    //SUBIDA
-  //    else if(valorPergunta==2){
-  //      //Solicita que a cabine suba ao segundo piso
-  //      Serial.println("Enviando fim de subida - fila");
-  //      subir();
-  //    while(serialExtra.available()){
-  //    int t = serialExtra.read();
-  //    }
-  //      byte protocolo[]={2,1}; //Envia o código de resposta à pergunta 3 com resposta 2
-  //          if(serialExtra.available()==0){ //So inicia transmissao se o buffer estiver vazio
-  //          Serial.println("Enviando fim de subida");
-  //          serialExtra.write(protocolo,2); //Manda 2 bytes para o Uno. O primeiro byte eh o codigo da resposra.
-  //                                          //O segundo byte e o valor da resposta
-  //          codigoPergunta = 0;
-  //          valorPergunta = 0;
-  //          fechadas = false;
-  //      delay(1000);
-  //      abertura();
-  //      }
-  //   }}
-  //    while(serialExtra.available()){
-  //    int t = serialExtra.read();
-  //    }
-  //
-  //    }
-  //
-  //          codigoPergunta = 0;
-  //          valorPergunta = 0;
-  //
+  //Teste comunicacao serial com Mega
+  char c[10];
+  String s = "";
+  delay(2500);
+  while (serialExtra.available() > 0) {
+    int i = 0;
+    c[i] = serialExtra.read();
+    if (c[i] > 32 && c[i] < 126) {
+      s += c[i];
+      i++;
+    }
+
+  }
+
+
+  if (s != "") {
+    Serial.println("Recebendo comando de  " + String(s) + " " + s.length());
+    if (s == "subir") {
+      Serial.println("SUBINDO");
+      subir();
+      delay(1000);
+      abertura();
+      s = "";
+    }
+    else if (s == "descer") {
+      Serial.println("DESCENDO");
+      descer();
+      delay(1000);
+      abertura();
+      s = "";
+    }
+    else {
+      Serial.println("String s: " + String(s));
+      s = "";
+    }
+  }
 }
+
+
 
 
 
