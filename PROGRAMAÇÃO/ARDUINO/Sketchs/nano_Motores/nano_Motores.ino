@@ -70,6 +70,8 @@ void setup() {
   Serial.begin(9600);
   serialExtra.begin(9600);
 
+  Serial.println("Nano - motores");
+
   //Sensores de fim de curso
   pinoPEA = 2;
   pinMode(pinoPEA, INPUT); //Sensor de porta da esquerda aberta (NF)
@@ -128,6 +130,7 @@ void fechamento() {
 
   while (!pdf || !pef) //Realiza o loop enquanto uma das portas ainda nao estiver totalmente fechada
   {
+    Serial.println("Comando de fechamento");
     pea = digitalRead(pinoPEA);
     pef = !digitalRead(pinoPEF);
     pdf = !digitalRead(pinoPDF);
@@ -206,7 +209,7 @@ void abertura() {
   while (!pda || !pea) //Realiza o loop enquanto uma das portas ainda nao estiver totalmente aberta
 
   {
-
+    Serial.println("Comando de abertura");
     pea = digitalRead(pinoPEA);
     pef = !digitalRead(pinoPEF);
     pdf = !digitalRead(pinoPDF);
@@ -313,7 +316,8 @@ void subir() {
   tempoInicial = millis() / 1000;
 
   //Distancia entre o sensor e a cabine em centimetros.
-  while (distancia >= 30 && distancia2 <= 72) {
+  //*A soma de distancia e distancia2 deve ser 102. 
+  while (distancia >= 42 && distancia2 <= 55) {
     microsec = sensorDistancia.timing();
     distancia = sensorDistancia.convert(microsec, Ultrasonic::CM);
     microsec2 = sensorDistancia2.timing();
@@ -400,7 +404,7 @@ void loopMotores() {
   Serial.println("---------------------------------------------------------------------------------------------");
 
   //Loop das portas
-  delay(120000);
+  delay(1000);
   loopPortas();
 
   //Desce
@@ -409,7 +413,7 @@ void loopMotores() {
   Serial.println("---------------------------------------------------------------------------------------------");
 
   //Loop das portas
-  delay(120000);
+  delay(1000);
   loopPortas();
 
 }
@@ -424,51 +428,51 @@ void loopMotores() {
 void loop() {
 
   //Mantem a ponte bloqueada e garante A diferente de A'
-  //  digitalWrite(A0, LOW); //Permissividade
-  //  digitalWrite(A1, LOW);
-  //  digitalWrite(A2, !digitalRead(A1));
+  digitalWrite(A0, LOW); //Permissividade
+  digitalWrite(A1, LOW);
+  digitalWrite(A2, !digitalRead(A1));
 
   /* Inicia testes dos motores. Faz as portas se fecharem, sobe a cabine, abre as portas, fecha as portas novamente
     desce a cabine, abre novamente as portas e torna a fecha-las em um loop infinito.
     Este loop e apenas para teste de comissionamento.*/
-  //loopMotores();
+  loopMotores();
 
-  //Teste comunicacao serial com Mega
-  char c[10];
-  String s = "";
-  delay(2500);
-  while (serialExtra.available() > 0) {
-    int i = 0;
-    c[i] = serialExtra.read();
-    if (c[i] > 32 && c[i] < 126) {
-      s += c[i];
-      i++;
-    }
-
-  }
-
-
-  if (s != "") {
-    Serial.println("Recebendo comando de  " + String(s) + " " + s.length());
-    if (s == "subir") {
-      Serial.println("SUBINDO");
-      subir();
-      delay(1000);
-      abertura();
-      s = "";
-    }
-    else if (s == "descer") {
-      Serial.println("DESCENDO");
-      descer();
-      delay(1000);
-      abertura();
-      s = "";
-    }
-    else {
-      Serial.println("String s: " + String(s));
-      s = "";
-    }
-  }
+  //  //Teste comunicacao serial com Mega
+  //  char c[10];
+  //  String s = "";
+  //  delay(2500);
+  //  while (serialExtra.available() > 0) {
+  //    int i = 0;
+  //    c[i] = serialExtra.read();
+  //    if (c[i] > 32 && c[i] < 126) {
+  //      s += c[i];
+  //      i++;
+  //    }
+  //
+  //  }
+  //
+  //
+  //  if (s != "") {
+  //    Serial.println("Recebendo comando de  " + String(s) + " " + s.length());
+  //    if (s == "subir") {
+  //      Serial.println("SUBINDO");
+  //      subir();
+  //      delay(1000);
+  //      abertura();
+  //      s = "";
+  //    }
+  //    else if (s == "descer") {
+  //      Serial.println("DESCENDO");
+  //      descer();
+  //      delay(1000);
+  //      abertura();
+  //      s = "";
+  //    }
+  //    else {
+  //      Serial.println("String s: " + String(s));
+  //      s = "";
+  //    }
+  //  }
 }
 
 
